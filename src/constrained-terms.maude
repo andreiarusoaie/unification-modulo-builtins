@@ -1,0 +1,159 @@
+*** load smt-annotated
+load utils
+
+mod STATE is
+    including INTEGER .
+    including ID .
+
+    sort State .
+    op emp : -> State [ctor] .
+    op _|->_ : Id Integer -> State [ctor prec 43] .
+    op _,_ : State State -> State [ctor assoc comm id: emp prec 45] .
+
+endm
+
+    
+mod TERM-PATTERN is
+    protecting STATE .
+
+    sort TermPattern .
+    subsorts Integer Id State < TermPattern .
+endm
+    
+mod CONSTRAINT-FORMULA is
+    including TERM-PATTERN .
+    protecting UTILS .
+
+    sorts ConstraintFormula .
+    subsort Boolean < ConstraintFormula .
+    op Not_ : ConstraintFormula -> ConstraintFormula [prec 53] .
+    op _And_ : ConstraintFormula ConstraintFormula -> ConstraintFormula [gather (E e) prec 55] .
+    op _Xor_ : ConstraintFormula ConstraintFormula -> ConstraintFormula [gather (E e) prec 55] .
+    op _Or_ : ConstraintFormula ConstraintFormula -> ConstraintFormula [gather (E e) prec 55] .
+    op _Implies_ : ConstraintFormula ConstraintFormula -> ConstraintFormula [gather (e E) prec 61] .
+
+    op Exists_._ : Integer ConstraintFormula -> ConstraintFormula .
+    op Exists_._ : Boolean ConstraintFormula -> ConstraintFormula .
+    op Exists_._ : Id ConstraintFormula -> ConstraintFormula .
+    op Exists_._ : State ConstraintFormula -> ConstraintFormula .
+    
+    op Forall_._ : Integer ConstraintFormula -> ConstraintFormula .
+    op Forall_._ : Boolean ConstraintFormula -> ConstraintFormula .
+    op Forall_._ : Id ConstraintFormula -> ConstraintFormula .
+    op Forall_._ : State ConstraintFormula -> ConstraintFormula .
+
+    op _=?_ : TermPattern TermPattern -> ConstraintFormula [gather (e E) prec 51] .
+
+    vars B B' : Boolean .
+    eq B And B' = B #and B' .
+endm
+    
+
+mod UNIFICATION-MODULO-BUILTINS is
+    protecting CONSTRAINT-FORMULA .
+    protecting INTEGER .
+    protecting UTILS .
+    protecting SMT-UTILS .
+
+
+    var V : Variable .
+    vars S S1 S2 S' : Substitution .
+    vars SO SO' : SubstitutionAtObjectLevel .
+    var SS : Substitutions .
+    vars T T1 T2 T1A T2A : Term .
+    var Q : Qid .
+    var CF : ConstraintFormula .
+    vars N' N'' : Nat .
+    vars B B' : Boolean .
+    
+    
+    *** internals ****
+    op substitutionAsFormula : Substitution -> ConstraintFormula .
+    eq substitutionAsFormula(S) = downTerm(substAsTerm(S), (Not #true)) .
+    
+    op substAsTerm : Substitution -> Term .
+    eq substAsTerm((V <- T ; S)) = '_And_['_#===_[V, T], substAsTerm(S)] .
+    eq substAsTerm(none) = '#true.Boolean .
+
+    sorts SubstitutionAtObjectLevel TermObj .
+    subsorts Integer State Id < TermObj .
+    op _-->_ : Qid TermObj -> SubstitutionAtObjectLevel [prec 45 format (nt d d d)] .
+    op __ : SubstitutionAtObjectLevel SubstitutionAtObjectLevel -> SubstitutionAtObjectLevel [prec 46 assoc comm format (d d d) id: None] .
+    op None : -> SubstitutionAtObjectLevel .
+    op substToObj : Substitution -> SubstitutionAtObjectLevel .
+    eq substToObj(V <- T ; S ) = getName(V) --> downTerm(T, emp)  substToObj(S) .
+    eq substToObj(V <- T ; S ) = getName(V) --> downTerm(T, 0)  substToObj(S) .
+    eq substToObj(V <- T ; S ) = getName(V) --> downTerm(T, a)  substToObj(S) .
+    eq substToObj(none) = None .
+    
+    sort UnificationResults .
+    op noUnifResults : -> UnificationResults .
+    op [_|_] : SubstitutionAtObjectLevel ConstraintFormula -> UnificationResults [format (n d d nt n d)] .
+    op _,,_ : UnificationResults UnificationResults -> UnificationResults [gather (E e) prec 70 format(d d d nt d) id: noUnifResults] .
+
+    op processUnifModBuiltin : Substitution Substitution Substitutions Qid -> UnificationResults .
+    ceq processUnifModBuiltin(S1, S2 , (S ;; SS), Q)  = ([ substToObj(S') | CF ] ,, processUnifModBuiltin(S1, S2, SS, Q))
+      if S' := removeBuiltinKeys(S, Q) /\
+	  CF := downTerm('_And_[
+	      '_And_[substAsTerm(S1), substAsTerm(S2)],
+	      substAsTerm(removeNonBuiltinKeys(S, Q))] , Not #true) .
+    eq processUnifModBuiltin(S1, S2 , emptyUnif, Q) = noUnifResults .
+    *** end internals ****
+
+
+    ***************************************************************
+    *** main unificationModuloBuiltin algorithm implementation  ***
+    ***************************************************************
+    op completeSetOfUMBs : Term Term Qid -> UnificationResults .
+    eq completeSetOfUMBs(T1, T2, Q) =
+	filterUnsatUMBs(completeSetOfUMBsUnfiltered(T1, T2, Q)) .
+    
+    op completeSetOfUMBsUnfiltered : Term Term Qid -> UnificationResults .
+    ceq completeSetOfUMBsUnfiltered(T1, T2, Q) = processUnifModBuiltin(S1, S2, SS, Q)
+      if { T1A | S1 | N' } := getAbstraction(T1, none, upModule(Q, true), 0) /\
+	  { T2A | S2 | N'' } := getAbstraction(T2, none, upModule(Q, true), slen(S1)) /\
+	  SS := getUnifiers(Q, T1A, T2A) .
+
+    op unifyAbstractions : Term Term Qid -> Substitutions .
+    ceq unifyAbstractions(T1, T2, Q) = getUnifiers(Q, T1A, T2A) 
+      if { T1A | S1 | N' } := getAbstraction(T1, none, upModule(Q, true), 0) /\
+	  { T2A | S2 | N'' } := getAbstraction(T2, none, upModule(Q, true), slen(S1)) .
+
+      
+    *** smt filter for unification results ***
+    vars UR : UnificationResults .
+    op smtModule : -> Module [memo] .
+    eq smtModule = upModule('STATE, true) .
+    op isSat : Boolean -> Bool .
+    eq isSat(B:Boolean) = metaCheck(smtModule, 2smt(upTerm(B:Boolean))) .
+    op filterUnsatUMBs : UnificationResults -> UnificationResults  .
+    ceq filterUnsatUMBs([ SO | B ] ,, UR) = [ SO | B ] ,, filterUnsatUMBs(UR) if isSat(B) .
+    ceq filterUnsatUMBs([ SO | B ] ,, UR) = filterUnsatUMBs(UR) if not isSat(B) .
+    eq filterUnsatUMBs(noUnifResults) = noUnifResults .
+
+    *** some vars for testing
+    var Z : State .
+    vars N N1 M L C C' : Integer .
+    vars I J K : Id .
+    
+endm
+
+
+*** Simple tests for internals
+*** red in UNIFICATION-MODULO-BUILTINS : getAbstraction(upTerm(n |-> 1 ,count |-> 42), none, upModule('STATE, true), 0) .
+*** red in UNIFICATION-MODULO-BUILTINS : getAbstraction(upTerm(Z , n |-> 1), none, upModule('STATE, true), 4) . 
+*** red in UNIFICATION-MODULO-BUILTINS : getUnifiers('STATE, upTerm(I |-> N , J |-> M) , upTerm(Z , K |-> L)) .
+
+
+*** Some other tests
+red in UNIFICATION-MODULO-BUILTINS : unifyAbstractions(upTerm(n |-> 2 #* N, count |-> C), upTerm(count |-> C', n |-> 3 #* N1) ,'STATE) . 
+red in UNIFICATION-MODULO-BUILTINS : completeSetOfUMBsUnfiltered(upTerm(n |-> 2 #* N, count |-> C), upTerm(count |-> C', n |-> 3 #* N1) ,'STATE) . 
+red in UNIFICATION-MODULO-BUILTINS : completeSetOfUMBs(upTerm(n |-> 2 #* N, count |-> C), upTerm(count |-> C', n |-> 3 #* N1) ,'STATE) .     
+
+    
+*** paper example: should return 2 solutions
+*** red in UNIFICATION-MODULO-BUILTINS : unifyAbstractions(upTerm(n |-> 1 , count |-> 42) , upTerm(Z , n |-> 1), 'STATE) .
+*** red in UNIFICATION-MODULO-BUILTINS : completeSetOfUMBsUnfiltered(upTerm(n |-> 1 , count |-> 42) , upTerm(Z , n |-> 1), 'STATE) .
+
+*** paper example where unsat formulas were filtered: should return 1 solution
+*** red in UNIFICATION-MODULO-BUILTINS : completeSetOfUMBs(upTerm(n |-> 1 , count |-> 42) , upTerm(Z , n |-> 1), 'STATE) .

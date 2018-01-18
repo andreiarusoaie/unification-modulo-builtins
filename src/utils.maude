@@ -1,0 +1,234 @@
+load smt-annotated.maude
+
+set include BOOL on .
+
+mod UTILS is
+    protecting META-LEVEL .
+    protecting CONVERSION .
+
+    vars Q Q' M : Qid .
+    var OPS : OpDeclSet .
+    vars TL TL' : TypeList .
+    vars TrmL TrmL' : TermList .
+    var T : Type .
+    var AS : AttrSet .
+    var Mod : Module .
+    vars T1 T2 T1' T1A T2A : Term .
+    vars N N' N'' : Nat .
+    vars S S' S'' S1 S2 : Substitution .
+    vars TLIST TLIST' : TermList .
+    var V : Variable .
+    var C : Constant .
+    var NV : Variable .
+    var TT : Type .
+    var FR : FindResult .
+    var A : Assignment .
+    
+    *** public (exposed) utility function
+    *** Usage: isBuiltin('_+_, ('Integer 'Integer), 'INTEGER) 
+    op isBuiltin : Qid TypeList Qid -> Bool .
+    eq isBuiltin(Q, TL, M) = isBuiltinHelper(Q, TL, getOps(upModule(M, true))) .
+
+    *** private helper function
+    op isBuiltinHelper : Qid TypeList OpDeclSet -> Bool .
+    ceq isBuiltinHelper(Q, TL, ( (op Q' : TL -> T [metadata("builtin") AS] . ) OPS)) = true if Q' := qidCleanup(Q) .
+    eq isBuiltinHelper(Q, TL, OPS) = false [owise] .
+    ceq isBuiltinHelper(Q, TL, OPS) = true
+      if substr(string(Q), (- length("Integer") + length(string(Q))), length("Integer")) == "Integer" .
+      *** workaround, but stable
+
+    *** 'q.Sort ---> 'q 
+    op qidCleanup : Qid -> Qid .
+    ceq qidCleanup(Q) = qid(substr(string(Q), 0, FR)) if FR := find(string(Q), ".", 0) /\ FR =/= notFound .
+    ceq qidCleanup(Q) = Q if FR := find(string(Q), ".", 0) /\ FR == notFound .
+
+
+    *** public (exposed) utility function
+    *** Usage: isConstructor('_|->_, ('Integer 'Integer), 'MAP-OF-INTEGERS)
+    op isConstructor : Qid TypeList Qid -> Bool .
+    eq isConstructor(Q, TL, M) = isConstructorHelper(Q, TL, getOps(upModule(M, true))) .
+    
+    *** private helper function
+    op isConstructorHelper : Qid TypeList OpDeclSet -> Bool .
+    eq isConstructorHelper(Q, TL, ( (op Q : TL -> T [ctor AS] . ) OPS)) = true .
+    eq isConstructorHelper(Q, TL, ( (op Q : TL' -> T [ctor AS] . ) OPS)) = true . *** todo
+    eq isConstructorHelper(Q, TL, OPS) = false [owise] .
+
+    
+    sort Substitutions .
+    subsort Substitution < Substitutions .
+    op emptyUnif : -> Substitutions .
+    op _;;_ : Substitutions Substitutions -> Substitutions [assoc comm id: emptyUnif] .
+
+    
+    *** public (exposed) utility function
+    *** Usage: getUnifiers('TEST-MODULE, upTerm((X |-> 3, Y |-> 5)), upTerm((X1 |-> Y1, X2 |-> Y2)))
+    op getUnifiers : Qid Term Term -> Substitutions .
+    op getUnifiersHelper : Module Term Term Nat -> Substitutions .
+    op getUnifierByNo : Module Term Term Nat -> Substitution .
+    
+    ceq getUnifierByNo(Mod, T1, T2, N)  = S
+      if {S,N'} := metaVariantUnify(Mod, T1 =? T2, empty, 0, N) .
+    ceq getUnifierByNo(Mod, T1, T2, N)  = none
+      if noUnifier == metaVariantUnify(Mod, T1 =? T2, empty, 0, N) .
+    ceq getUnifiersHelper(Mod, T1, T2, N) = S ;; getUnifiersHelper(Mod, T1, T2, N + 1)
+      if S := getUnifierByNo(Mod, T1, T2, N) /\ S =/= none .
+    ceq getUnifiersHelper(Mod, T1, T2, N) = emptyUnif
+      if none == getUnifierByNo(Mod, T1, T2, N)  .
+    eq getUnifiers(M, T1, T2) = getUnifiersHelper(upModule(M, true), T1, T2, 0) .
+
+
+    *** public (exposed) utility function
+    *** Usage: applySubstitution(getUnifiers(upModule('TEST-MODULE, true), upTerm(X |-> 3), upTerm((X1 |-> 3))), upTerm(X |-> 3))
+    op applySubstitution : Substitution Term -> Term .
+    op applySubstitionOnList : Substitution TermList -> TermList .
+    eq applySubstitution(S, Q [ TLIST ]) = Q [ applySubstitionOnList(S, TLIST) ] .
+    eq applySubstitution(((V <- T1) ; S) , V) =  T1 .
+    eq applySubstitution(S , C) =  C .
+
+    eq applySubstitionOnList(S, empty) = empty .
+    eq applySubstitionOnList(S, (T1, TLIST)) = applySubstitution(S, T1) , applySubstitionOnList(S, TLIST) .
+
+    *** private
+    op getTypes : TermList Module -> TypeList .
+    eq getTypes((T1, TrmL), Mod) =  getType(metaReduce(Mod, T1)) getTypes(TrmL, Mod) .
+    eq getTypes(empty, Mod) = nil .
+    
+    sorts Abstraction AbstractionTriple AbstractionList .
+
+    *** public (exposed) utility function
+    *** computes the abstraction (w.r.t builtins) of a term
+    op abstraction : Term Qid -> Abstraction .
+    ceq abstraction(T1 , M) = { T2 | S' } if  { T2 | S' | N } := getAbstraction(T1, none, upModule(M, true), 0) . 
+
+    *** internals 
+    op {_|_} : Term Substitution -> Abstraction .
+    op {_|_|_} : Term Substitution Nat -> AbstractionTriple .
+    op getAbstraction : Term Substitution Module Nat -> AbstractionTriple .
+    op [_;_;_] : TermList Nat Substitution -> AbstractionList .
+    op abstractList : TermList Module Nat Substitution -> AbstractionList .
+    
+    ceq abstractList((T1, TrmL), Mod, N, S) = [(T1', TrmL') ; N'' ; S'' ]
+      if { T1' | S' | N' } := getAbstraction(T1, S, Mod, N ) /\
+	  [ TrmL' ; N'' ; S''] := abstractList(TrmL, Mod, N', S') .
+    eq abstractList(empty, Mod, N, S) = [ empty ; N ; S ] .
+    ceq getAbstraction(Q [TLIST], S,  Mod, N) = { NV | NV <- Q [ TLIST ] ; S | N + 1 }
+      if TT := getType(metaReduce(Mod, Q [ TLIST ])) /\
+	  NV := qid("abs" + string(N, 10) + ":" + string(TT)) /\ isBuiltin(Q, getTypes(TLIST, Mod), getName(Mod)) .
+    ceq getAbstraction(Q [TLIST], S, Mod , N) = { Q [TLIST'] | S' | N' }
+      if [ TLIST' ; N' ; S' ] := abstractList(TLIST, Mod, N, S) /\
+	 TT := getType(metaReduce(Mod, Q [ TLIST ])) /\ isConstructor(Q, getTypes(TLIST, Mod), getName(Mod)) .
+    ceq getAbstraction(C, S,  Mod, N) = { NV | NV <- C ; S | N + 1 }
+      if TT := getType(metaReduce(Mod, C)) /\
+	  NV := qid("abs" + string(N, 10) + ":" + string(TT)) /\ isBuiltin(C, nil, getName(Mod)) .
+    ceq getAbstraction(C, S,  Mod, N) = { C | S | N }
+      if TT := getType(metaReduce(Mod, C)) /\ (not isBuiltin(C, nil, getName(Mod))) .
+    eq getAbstraction(V, S,  Mod, N) = { V | S | N } .
+
+
+    *** public (exposed) utility function
+    op builtin : Qid -> Bool .
+    eq builtin('Id) = true .
+    eq builtin('Boolean) = true .
+    eq builtin('Integer) = true .
+    eq builtin(Q) = false [owise] .
+
+    
+    *** public (exposed) utility function
+    op removeBuiltinKeys : Substitution Qid -> Substitution .
+    ceq removeBuiltinKeys((V <- T1 ; S), Q) = removeBuiltinKeys(S, Q)
+      if builtin(getType(V)) .
+    ceq removeBuiltinKeys((V <- T1 ; S), Q) = (V <- T1 ; removeBuiltinKeys(S, Q)) 
+      if not builtin(getType(V)) .
+    eq removeBuiltinKeys(none, Q) = none .
+
+    *** public (exposed) utility function
+    op removeNonBuiltinKeys : Substitution Qid -> Substitution .
+    ceq removeNonBuiltinKeys((V <- T1 ; S), Q) = removeNonBuiltinKeys(S, Q)
+      if not builtin(getType(V)) .
+    ceq removeNonBuiltinKeys((V <- T1 ; S), Q) = (V <- T1 ; removeNonBuiltinKeys(S, Q)) 
+      if builtin(getType(V)) .
+    eq removeNonBuiltinKeys(none, Q) = none .
+
+    op slen : Substitution -> Nat .
+    eq slen(none) = 0 .
+    eq slen(A ; S) = 1 + slen(S) .
+    
+endm
+
+mod SMT-UTILS is
+    protecting META-LEVEL .
+
+    var F : Qid .
+    var S : String .
+    vars T T1 T2 : Term .
+    vars TL TL' OVL OVL' : TermList .
+    vars C C' : Constant .
+    vars V V' : Variable .
+    
+
+***(
+  The below code is inspired from the SMTLOGIC module described in the paper
+  On the Implementation of Conditional Narrowing
+           Modulo SMT plus Axioms
+  Luis Aguirre, Narciso Martí-Oliet, Miguel Palomino, and Isabel Pita
+      Departamento de Sistemas Informáticos y Computación
+  Facultad de Informática, Universidad Complutense de Madrid, Spain
+  {luisagui, narciso, miguelpt, ipandreu}@ucm.es
+***)
+    op 2smt : Term -> Term .
+    op 2smt* : Term -> Term .
+    op 2smtPos : String -> String .
+    op 2smtVar : String Type -> Variable .
+    op 2smtConst : String Type -> Constant .
+    op 2smtTL : TermList -> TermList .
+    op 2smtQTL : Qid TermList -> Term .
+
+    eq 2smt(T) = 2smt*(T) [owise] .
+    
+    eq 2smt*('n.Id) = 2smtConst("1000", 'Integer) .
+    eq 2smt*('count.Id) = 2smtConst("2000", 'Integer) .
+    eq 2smt*(C) =  2smtConst(string(getName(C)), getType(C)) .
+    eq 2smt*(V) =  2smtVar(string(getName(V)), getType(V)) .
+    
+    eq 2smt*('_#+_[TL]) = 2smtQTL('_+_, TL) .
+    eq 2smt*('_#*_[TL]) = 2smtQTL('_*_, TL) .
+    eq 2smt*('_#-_[TL]) = 2smtQTL('_-_, TL) .
+    eq 2smt*('_#/_[TL]) = 2smtQTL('_div_, TL) .
+    eq 2smt*('_#<=_[TL]) = 2smtQTL('_<=_, TL) .
+    eq 2smt*('_#<_[TL]) = 2smtQTL('_<_, TL) .
+    eq 2smt*('_#>_[TL]) = 2smtQTL('_>_, TL) .
+    eq 2smt*('_#>=_[TL]) = 2smtQTL('_>=_, TL) .
+    eq 2smt*('_#==_[TL]) = 2smtQTL('_===_, TL) .
+    eq 2smt*('_#=/==_[TL]) = 2smtQTL('_=/==_, TL) .
+    eq 2smt*('_#and_[TL]) = 2smtQTL('_#and_, TL) .
+    eq 2smt*('_#or_[TL]) = 2smtQTL('_or_, TL) .
+    eq 2smt*('_#xor_[TL]) = 2smtQTL('_xor_, TL) .
+    eq 2smt*('#not_[T]) = 'not_[2smt(T)] .
+    eq 2smt*('_#===_[TL]) = 2smtQTL('_#===_, TL) .
+    eq 2smt*('_#=/==_[TL]) = 2smtQTL('_=/==_, TL) .
+    eq 2smt*('_#*_[TL]) = 2smtQTL('_*_, TL) .
+    eq 2smt*(F[TL]) = F[2smtTL(TL)] [owise] .
+
+    eq 2smtPos(S) = substr(S, 6, length(S)) .
+
+    eq 2smtConst("#true", 'Boolean) = qid("#true.Boolean") .
+    eq 2smtConst("#false", 'Boolean) = qid("#false.Boolean") .
+    eq 2smtConst(S, 'Integer) = qid(S + ".Integer") .
+    *** eq 2smtConst(S, 'Id) = qid(S + ".Id") .
+
+    eq 2smtVar(S, 'Boolean) = qid(S + ":Boolean") .
+    eq 2smtVar(S, 'Integer) = qid(S + ":Integer") .
+    eq 2smtVar(S, 'Id) = qid(S + ":Integer") .
+
+    eq 2smtTL(empty) = empty .
+    eq 2smtTL((T, TL)) = 2smt(T), 2smtTL(TL) [owise] .
+    eq 2smtQTL(F, T) = 2smt(T) .
+    eq 2smtQTL(F, (T, TL)) = F[2smt(T), 2smtQTL(F, TL)] [owise] .
+    
+    
+    
+    ceq 2smt(C) = C if getType(C) == ('Integer).Sort .
+    *** ceq 2smt(C) = qid(string(getName(C)) + ":Integer") if getType(C) == ('Id).Sort .
+    
+endm 
