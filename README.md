@@ -9,7 +9,8 @@ modulo builtins.
 * Linux or Mac OS X.
 * Maude version alpha115 with CVC4.
 * Make sure that typing `maude` in your command line outputs:
-	```
+
+```
 	:-$ maude
 		     \||||||||||||||||||/
 		   --- Welcome to Maude ---
@@ -17,13 +18,14 @@ modulo builtins.
 	   Maude alpha115 built: Aug 11 2017 19:56:55
 	    Copyright 1997-2017 SRI International
 		   ...
-	```
+	:-$ 
+```
 
 ## Usage:
 
 In your command line type:
 
-	`:-$ cd src`
-	`:-$ make`
+	:-$ cd src
+	:-$ make
 	
 	
