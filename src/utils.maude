@@ -8,6 +8,7 @@ mod UTILS is
 
     vars Q Q' M : Qid .
     var OPS : OpDeclSet .
+    vars SSDS SSDS' : SubsortDeclSet .
     vars TL TL' : TypeList .
     vars TrmL TrmL' : TermList .
     var T : Type .
@@ -25,7 +26,8 @@ mod UTILS is
     var A : Assignment .
     
     *** public (exposed) utility function
-    *** Usage: isBuiltin('_+_, ('Integer 'Integer), 'INTEGER) 
+    *** Usage: isBuiltin('_+_, ('Integer 'Integer), 'INTEGER)
+    *** Assumption: builtins are annotated with metadata "builtin"; others are not recongnized
     op isBuiltin : Qid TypeList Qid -> Bool .
     eq isBuiltin(Q, TL, M) = isBuiltinHelper(Q, TL, getOps(upModule(M, true))) .
 
@@ -44,18 +46,33 @@ mod UTILS is
 
 
     *** public (exposed) utility function
-    *** Usage: isConstructor('_|->_, ('Integer 'Integer), 'MAP-OF-INTEGERS)
+      *** Usage: isConstructor('_|->_, ('Integer 'Integer), 'MAP-OF-INTEGERS)
+    *** Assumption: constructors *must* have the ctor attribute!
     op isConstructor : Qid TypeList Qid -> Bool .
-    eq isConstructor(Q, TL, M) = isConstructorHelper(Q, TL, getOps(upModule(M, true))) .
+    ceq isConstructor(Q, TL, M) = isConstructorHelper(Q, TL, getOps(Mod), Mod)
+      if Mod := upModule(M, true) .
     
     *** private helper function
-    op isConstructorHelper : Qid TypeList OpDeclSet -> Bool .
-    eq isConstructorHelper(Q, TL, ( (op Q : TL -> T [ctor AS] . ) OPS)) = true .
-    eq isConstructorHelper(Q, TL, ( (op Q : TL' -> T [ctor AS] . ) OPS)) = true . *** todo
-    eq isConstructorHelper(Q, TL, OPS) = false [owise] .
+    op isConstructorHelper : Qid TypeList OpDeclSet Module -> Bool .
+    eq isConstructorHelper(Q, TL, ((op Q : TL -> T [ctor AS] .) OPS), Mod) = true .
+    ceq isConstructorHelper(Q, TL, ((op Q : TL' -> T [ctor AS] .) OPS), Mod) = true if isSubsortTypeList(TL, TL', Mod) .
+    eq isConstructorHelper(Q, TL, OPS, Mod) = false [owise] .
 
+
+    op isSubsortTypeList : TypeList TypeList Module -> Bool .
+    ceq isSubsortTypeList((Q TL), (Q' TL'), Mod) = isSubsortTypeList(TL, TL', Mod)
+      if isSubsort(Q, Q', Mod) .
+    eq isSubsortTypeList(nil, nil, Mod) = true .
+    ceq isSubsortTypeList((Q TL), (Q' TL'), Mod) = false
+      if isSubsort(Q, Q', Mod) = false .
     
-    sort Substitutions .
+    *** isSubsort(subsort, sort, Module) = true
+    op isSubsort : Qid Qid Module -> Bool .
+    eq isSubsort(Q, Q, Mod) = true .
+    ceq isSubsort(Q, Q', Mod) = true if ((subsort Q < Q' .) SSDS) := getSubsorts(Mod) .
+    eq isSubsort(Q, Q', Mod) = false [owise] . 
+    
+    sort Substitutions . *** internal: keeps more substitutions
     subsort Substitution < Substitutions .
     op emptyUnif : -> Substitutions .
     op _;;_ : Substitutions Substitutions -> Substitutions [assoc comm id: emptyUnif] .
@@ -191,23 +208,23 @@ mod SMT-UTILS is
     eq 2smt*(C) =  2smtConst(string(getName(C)), getType(C)) .
     eq 2smt*(V) =  2smtVar(string(getName(V)), getType(V)) .
     
-    eq 2smt*('_#+_[TL]) = 2smtQTL('_+_, TL) .
-    eq 2smt*('_#*_[TL]) = 2smtQTL('_*_, TL) .
-    eq 2smt*('_#-_[TL]) = 2smtQTL('_-_, TL) .
-    eq 2smt*('_#/_[TL]) = 2smtQTL('_div_, TL) .
-    eq 2smt*('_#<=_[TL]) = 2smtQTL('_<=_, TL) .
-    eq 2smt*('_#<_[TL]) = 2smtQTL('_<_, TL) .
-    eq 2smt*('_#>_[TL]) = 2smtQTL('_>_, TL) .
-    eq 2smt*('_#>=_[TL]) = 2smtQTL('_>=_, TL) .
-    eq 2smt*('_#==_[TL]) = 2smtQTL('_===_, TL) .
-    eq 2smt*('_#=/==_[TL]) = 2smtQTL('_=/==_, TL) .
+    eq 2smt*('_#+_[TL]) = 2smtQTL('_#+_, TL) .
+    eq 2smt*('_#*_[TL]) = 2smtQTL('_#*_, TL) .
+    eq 2smt*('_#-_[TL]) = 2smtQTL('_#-_, TL) .
+    eq 2smt*('_#/_[TL]) = 2smtQTL('_#div_, TL) .
+    eq 2smt*('_#<=_[TL]) = 2smtQTL('_#<=_, TL) .
+    eq 2smt*('_#<_[TL]) = 2smtQTL('_#<_, TL) .
+    eq 2smt*('_#>_[TL]) = 2smtQTL('_#>_, TL) .
+    eq 2smt*('_#>=_[TL]) = 2smtQTL('_#>=_, TL) .
+    eq 2smt*('_#==_[TL]) = 2smtQTL('_#===_, TL) .
+    eq 2smt*('_#=/==_[TL]) = 2smtQTL('_#=/==_, TL) .
     eq 2smt*('_#and_[TL]) = 2smtQTL('_#and_, TL) .
-    eq 2smt*('_#or_[TL]) = 2smtQTL('_or_, TL) .
-    eq 2smt*('_#xor_[TL]) = 2smtQTL('_xor_, TL) .
+    eq 2smt*('_#or_[TL]) = 2smtQTL('_#or_, TL) .
+    eq 2smt*('_#xor_[TL]) = 2smtQTL('_#xor_, TL) .
     eq 2smt*('#not_[T]) = 'not_[2smt(T)] .
     eq 2smt*('_#===_[TL]) = 2smtQTL('_#===_, TL) .
-    eq 2smt*('_#=/==_[TL]) = 2smtQTL('_=/==_, TL) .
-    eq 2smt*('_#*_[TL]) = 2smtQTL('_*_, TL) .
+    eq 2smt*('_#=/==_[TL]) = 2smtQTL('_#=/==_, TL) .
+    eq 2smt*('_#*_[TL]) = 2smtQTL('_#*_, TL) .
     eq 2smt*(F[TL]) = F[2smtTL(TL)] [owise] .
 
     eq 2smtPos(S) = substr(S, 6, length(S)) .

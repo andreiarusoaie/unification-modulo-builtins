@@ -9,7 +9,7 @@ mod STATE is
     op emp : -> State [ctor] .
     op _|->_ : Id Integer -> State [ctor prec 43] .
     op _,_ : State State -> State [ctor assoc comm id: emp prec 45] .
-
+    
 endm
 
     
@@ -78,17 +78,17 @@ mod UNIFICATION-MODULO-BUILTINS is
     sorts SubstitutionAtObjectLevel TermObj .
     subsorts Integer State Id < TermObj .
     op _-->_ : Qid TermObj -> SubstitutionAtObjectLevel [prec 45 format (nt d d d)] .
-    op __ : SubstitutionAtObjectLevel SubstitutionAtObjectLevel -> SubstitutionAtObjectLevel [prec 46 assoc comm format (d d d) id: None] .
-    op None : -> SubstitutionAtObjectLevel .
+    op __ : SubstitutionAtObjectLevel SubstitutionAtObjectLevel -> SubstitutionAtObjectLevel [prec 46 assoc comm format (d d d) id: idSubst] .
+    op idSubst : -> SubstitutionAtObjectLevel .
     op substToObj : Substitution -> SubstitutionAtObjectLevel .
     eq substToObj(V <- T ; S ) = getName(V) --> downTerm(T, emp)  substToObj(S) .
     eq substToObj(V <- T ; S ) = getName(V) --> downTerm(T, 0)  substToObj(S) .
     eq substToObj(V <- T ; S ) = getName(V) --> downTerm(T, a)  substToObj(S) .
-    eq substToObj(none) = None .
+    eq substToObj(none) = idSubst .
     
     sort UnificationResults .
     op noUnifResults : -> UnificationResults .
-    op [_|_] : SubstitutionAtObjectLevel ConstraintFormula -> UnificationResults [format (n d d nt n d)] .
+    op [_|_] : SubstitutionAtObjectLevel ConstraintFormula -> UnificationResults [format (n nt d nt n d)] .
     op _,,_ : UnificationResults UnificationResults -> UnificationResults [gather (E e) prec 70 format(d d d nt d) id: noUnifResults] .
 
     op processUnifModBuiltin : Substitution Substitution Substitutions Qid -> UnificationResults .
@@ -123,7 +123,7 @@ mod UNIFICATION-MODULO-BUILTINS is
     *** smt filter for unification results ***
     vars UR : UnificationResults .
     op smtModule : -> Module [memo] .
-    eq smtModule = upModule('STATE, true) .
+    eq smtModule = upModule('INTEGER, true) .
     op isSat : Boolean -> Bool .
     eq isSat(B:Boolean) = metaCheck(smtModule, 2smt(upTerm(B:Boolean))) .
     op filterUnsatUMBs : UnificationResults -> UnificationResults  .
@@ -152,8 +152,9 @@ red in UNIFICATION-MODULO-BUILTINS : completeSetOfUMBs(upTerm(n |-> 2 #* N, coun
 
     
 *** paper example: should return 2 solutions
-*** red in UNIFICATION-MODULO-BUILTINS : unifyAbstractions(upTerm(n |-> 1 , count |-> 42) , upTerm(Z , n |-> 1), 'STATE) .
-*** red in UNIFICATION-MODULO-BUILTINS : completeSetOfUMBsUnfiltered(upTerm(n |-> 1 , count |-> 42) , upTerm(Z , n |-> 1), 'STATE) .
+red in UNIFICATION-MODULO-BUILTINS : unifyAbstractions(upTerm(n |-> 1 , count |-> 42) , upTerm(Z , n |-> 1), 'STATE) .
+red in UNIFICATION-MODULO-BUILTINS : completeSetOfUMBsUnfiltered(upTerm(n |-> 1 , count |-> 42) , upTerm(Z , n |-> 1), 'STATE) .
 
 *** paper example where unsat formulas were filtered: should return 1 solution
-*** red in UNIFICATION-MODULO-BUILTINS : completeSetOfUMBs(upTerm(n |-> 1 , count |-> 42) , upTerm(Z , n |-> 1), 'STATE) .
+red in UNIFICATION-MODULO-BUILTINS : completeSetOfUMBs(upTerm(n |-> 1 , count |-> 42) , upTerm(Z , n |-> 1), 'STATE) .
+
