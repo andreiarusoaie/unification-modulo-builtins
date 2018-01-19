@@ -28,4 +28,8 @@ In your command line type:
 	:-$ cd src
 	:-$ make
 	
+For a prettier output (you need Perl for this):
 	
+	:-$ cd src
+	:-$ make nice
+
