@@ -72,7 +72,7 @@ mod UNIFICATION-MODULO-BUILTINS is
     eq substitutionAsFormula(S) = downTerm(substAsTerm(S), (Not #true)) .
     
     op substAsTerm : Substitution -> Term .
-    eq substAsTerm((V <- T ; S)) = '_And_['_#===_[V, T], substAsTerm(S)] .
+    eq substAsTerm((V <- T ; S)) = '_And_['_#==_[V, T], substAsTerm(S)] .
     eq substAsTerm(none) = '#true.Boolean .
 
     sorts SubstitutionAtObjectLevel TermObj .

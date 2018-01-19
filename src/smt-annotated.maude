@@ -39,8 +39,8 @@ fmod BOOLEAN is
   op _#or_ : Boolean Boolean -> Boolean [gather (E e) prec 59 special (id-hook SMT_Symbol (or)) metadata "builtin"] .
   op _#implies_ : Boolean Boolean -> Boolean [gather (e E) prec 61 special (id-hook SMT_Symbol (implies)) metadata "builtin"] .
 
-  op _#===_ : Boolean Boolean -> Boolean [gather (e E) prec 51 special (id-hook SMT_Symbol (===)) metadata "builtin"] .
-  op _#=/==_ : Boolean Boolean -> Boolean [gather (e E) prec 51 special (id-hook SMT_Symbol (=/==)) metadata "builtin"] .
+  op _#==_ : Boolean Boolean -> Boolean [gather (e E) prec 51 special (id-hook SMT_Symbol (===)) metadata "builtin"] .
+  op _#=/=_ : Boolean Boolean -> Boolean [gather (e E) prec 51 special (id-hook SMT_Symbol (=/==)) metadata "builtin"] .
   op _#?_:_ : Boolean Boolean Boolean -> Boolean [gather (e e e) prec 71 special (id-hook SMT_Symbol (ite)) metadata "builtin"] .
 
   vars B B' : Boolean .
@@ -65,8 +65,8 @@ fmod INTEGER is
   op _#>_ : Integer Integer -> Boolean [prec 37 special (id-hook SMT_Symbol (>)) metadata "builtin"] .
   op _#>=_ : Integer Integer -> Boolean [prec 37 special (id-hook SMT_Symbol (>=)) metadata "builtin"] .
 
-  op _#===_ : Integer Integer -> Boolean [gather (e E) prec 51 special (id-hook SMT_Symbol (===)) metadata "builtin"] .
-  op _#=/==_ : Integer Integer -> Boolean [gather (e E) prec 51 special (id-hook SMT_Symbol (=/==)) metadata "builtin"] .
+  op _#==_ : Integer Integer -> Boolean [gather (e E) prec 51 special (id-hook SMT_Symbol (===)) metadata "builtin"] .
+  op _#=/=_ : Integer Integer -> Boolean [gather (e E) prec 51 special (id-hook SMT_Symbol (=/==)) metadata "builtin"] .
   op _#?_:_ : Boolean Integer Integer -> Integer [gather (e e e) prec 71 special (id-hook SMT_Symbol (ite)) metadata "builtin"] .
 
   *** seems to break CVC4
@@ -79,7 +79,7 @@ fmod ID is
     ops a b c d e f g h i j k l m n p q r s t u v w x y z : -> Id [format (g o) metadata "builtin" ] .
     op count : -> Id [format (g o) metadata "builtin" ] .
 
-    op _#===_ : Id Id -> Boolean [gather (e E) prec 51 special (id-hook SMT_Symbol (===)) metadata "builtin"] .
+    op _#==_ : Id Id -> Boolean [gather (e E) prec 51 special (id-hook SMT_Symbol (===)) metadata "builtin"] .
 endfm
     
 set include BOOLEAN on .

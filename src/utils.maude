@@ -219,14 +219,14 @@ mod SMT-UTILS is
     eq 2smt*('_#<_[TL]) = 2smtQTL('_#<_, TL) .
     eq 2smt*('_#>_[TL]) = 2smtQTL('_#>_, TL) .
     eq 2smt*('_#>=_[TL]) = 2smtQTL('_#>=_, TL) .
-    eq 2smt*('_#==_[TL]) = 2smtQTL('_#===_, TL) .
-    eq 2smt*('_#=/==_[TL]) = 2smtQTL('_#=/==_, TL) .
+    eq 2smt*('_#==_[TL]) = 2smtQTL('_#==_, TL) .
+    eq 2smt*('_#=/=_[TL]) = 2smtQTL('_#=/=_, TL) .
     eq 2smt*('_#and_[TL]) = 2smtQTL('_#and_, TL) .
     eq 2smt*('_#or_[TL]) = 2smtQTL('_#or_, TL) .
     eq 2smt*('_#xor_[TL]) = 2smtQTL('_#xor_, TL) .
     eq 2smt*('#not_[T]) = 'not_[2smt(T)] .
-    eq 2smt*('_#===_[TL]) = 2smtQTL('_#===_, TL) .
-    eq 2smt*('_#=/==_[TL]) = 2smtQTL('_#=/==_, TL) .
+    eq 2smt*('_#==_[TL]) = 2smtQTL('_#==_, TL) .
+    eq 2smt*('_#=/=_[TL]) = 2smtQTL('_#=/=_, TL) .
     eq 2smt*('_#*_[TL]) = 2smtQTL('_#*_, TL) .
     eq 2smt*(F[TL]) = F[2smtTL(TL)] [owise] .
 
