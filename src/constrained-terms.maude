@@ -164,3 +164,4 @@ red in UNIFICATION-MODULO-BUILTINS : unifyAbstractions(upTerm(n |-> 1 , count |-
 red in UNIFICATION-MODULO-BUILTINS : completeSetOfUMBsUnfiltered(upTerm(n |-> 1 , count |-> 42) , upTerm(Z , n |-> 1), 'STATE) .
 red in UNIFICATION-MODULO-BUILTINS : completeSetOfUMBs(upTerm(n |-> 1 , count |-> 42) , upTerm(Z , n |-> 1), 'STATE) .
 
+quit
