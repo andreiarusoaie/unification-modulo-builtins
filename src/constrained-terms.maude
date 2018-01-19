@@ -77,7 +77,7 @@ mod UNIFICATION-MODULO-BUILTINS is
 
     sorts SubstitutionAtObjectLevel TermObj .
     subsorts Integer State Id < TermObj .
-    op _-->_ : Qid TermObj -> SubstitutionAtObjectLevel [prec 45 format (nt d d d)] .
+    op _-->_ : Qid TermObj -> SubstitutionAtObjectLevel [prec 45 format (n d d d)] .
     op __ : SubstitutionAtObjectLevel SubstitutionAtObjectLevel -> SubstitutionAtObjectLevel [prec 46 assoc comm format (d d d) id: idSubst] .
     op idSubst : -> SubstitutionAtObjectLevel .
     op substToObj : Substitution -> SubstitutionAtObjectLevel .
@@ -88,8 +88,8 @@ mod UNIFICATION-MODULO-BUILTINS is
     
     sort UnificationResults .
     op noUnifResults : -> UnificationResults .
-    op [_|_] : SubstitutionAtObjectLevel ConstraintFormula -> UnificationResults [format (n nt d nt n d)] .
-    op _,,_ : UnificationResults UnificationResults -> UnificationResults [gather (E e) prec 70 format(d d d nt d) id: noUnifResults] .
+    op [_|_] : SubstitutionAtObjectLevel ConstraintFormula -> UnificationResults [format (n d d n n d)] .
+    op _,,_ : UnificationResults UnificationResults -> UnificationResults [gather (E e) prec 70 format(d d d d d) id: noUnifResults] .
 
     op processUnifModBuiltin : Substitution Substitution Substitutions Qid -> UnificationResults .
     ceq processUnifModBuiltin(S1, S2 , (S ;; SS), Q)  = ([ substToObj(S') | CF ] ,, processUnifModBuiltin(S1, S2, SS, Q))
@@ -145,16 +145,22 @@ endm
 *** red in UNIFICATION-MODULO-BUILTINS : getUnifiers('STATE, upTerm(I |-> N , J |-> M) , upTerm(Z , K |-> L)) .
 
 
+*** BUILTINS: Integer, Boolean, Id
+    
 *** Some other tests
+
+*** TEST1:  n |-> 2 * N, count |-> C  =?   count |-> C', n |-> 3 * N'
+*** 2 solutions, 1 unsatisfiable
 red in UNIFICATION-MODULO-BUILTINS : unifyAbstractions(upTerm(n |-> 2 #* N, count |-> C), upTerm(count |-> C', n |-> 3 #* N1) ,'STATE) . 
 red in UNIFICATION-MODULO-BUILTINS : completeSetOfUMBsUnfiltered(upTerm(n |-> 2 #* N, count |-> C), upTerm(count |-> C', n |-> 3 #* N1) ,'STATE) . 
 red in UNIFICATION-MODULO-BUILTINS : completeSetOfUMBs(upTerm(n |-> 2 #* N, count |-> C), upTerm(count |-> C', n |-> 3 #* N1) ,'STATE) .     
 
     
-*** paper example: should return 2 solutions
+*** Paper example: n |-> 1, count |-> 42  =?  Z, n |-> 1 
+*** 2 solutions, 1 unsatisfiable
+red in UNIFICATION-MODULO-BUILTINS : abstraction(upTerm(n |-> 1 , count |-> 42), 'STATE) .
+red in UNIFICATION-MODULO-BUILTINS : abstraction(upTerm(Z , n |-> 1), 'STATE) .
 red in UNIFICATION-MODULO-BUILTINS : unifyAbstractions(upTerm(n |-> 1 , count |-> 42) , upTerm(Z , n |-> 1), 'STATE) .
 red in UNIFICATION-MODULO-BUILTINS : completeSetOfUMBsUnfiltered(upTerm(n |-> 1 , count |-> 42) , upTerm(Z , n |-> 1), 'STATE) .
-
-*** paper example where unsat formulas were filtered: should return 1 solution
 red in UNIFICATION-MODULO-BUILTINS : completeSetOfUMBs(upTerm(n |-> 1 , count |-> 42) , upTerm(Z , n |-> 1), 'STATE) .
 

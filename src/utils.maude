@@ -119,7 +119,7 @@ mod UTILS is
     ceq abstraction(T1 , M) = { T2 | S' } if  { T2 | S' | N } := getAbstraction(T1, none, upModule(M, true), 0) . 
 
     *** internals 
-    op {_|_} : Term Substitution -> Abstraction .
+    op {_|_} : Term Substitution -> Abstraction [format (n n d d n d)] .
     op {_|_|_} : Term Substitution Nat -> AbstractionTriple .
     op getAbstraction : Term Substitution Module Nat -> AbstractionTriple .
     op [_;_;_] : TermList Nat Substitution -> AbstractionList .
