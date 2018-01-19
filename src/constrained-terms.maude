@@ -78,13 +78,13 @@ mod UNIFICATION-MODULO-BUILTINS is
     sorts SubstitutionAtObjectLevel TermObj .
     subsorts Integer State Id < TermObj .
     op _-->_ : Qid TermObj -> SubstitutionAtObjectLevel [prec 45 format (n d d d)] .
-    op __ : SubstitutionAtObjectLevel SubstitutionAtObjectLevel -> SubstitutionAtObjectLevel [prec 46 assoc comm format (d d d) id: idSubst] .
-    op idSubst : -> SubstitutionAtObjectLevel .
+    op __ : SubstitutionAtObjectLevel SubstitutionAtObjectLevel -> SubstitutionAtObjectLevel [prec 46 assoc comm format (d d d) id: identity] .
+    op identity : -> SubstitutionAtObjectLevel [format (n d)] .
     op substToObj : Substitution -> SubstitutionAtObjectLevel .
     eq substToObj(V <- T ; S ) = getName(V) --> downTerm(T, emp)  substToObj(S) .
     eq substToObj(V <- T ; S ) = getName(V) --> downTerm(T, 0)  substToObj(S) .
     eq substToObj(V <- T ; S ) = getName(V) --> downTerm(T, a)  substToObj(S) .
-    eq substToObj(none) = idSubst .
+    eq substToObj(none) = identity .
     
     sort UnificationResults .
     op noUnifResults : -> UnificationResults .

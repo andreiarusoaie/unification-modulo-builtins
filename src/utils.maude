@@ -175,6 +175,8 @@ endm
 
 mod SMT-UTILS is
     protecting META-LEVEL .
+    protecting INT .
+    protecting CONVERSION .
 
     var F : Qid .
     var S : String .
@@ -182,6 +184,7 @@ mod SMT-UTILS is
     vars TL TL' OVL OVL' : TermList .
     vars C C' : Constant .
     vars V V' : Variable .
+    var N : Nat .
     
 
 ***(
@@ -200,11 +203,11 @@ mod SMT-UTILS is
     op 2smtConst : String Type -> Constant .
     op 2smtTL : TermList -> TermList .
     op 2smtQTL : Qid TermList -> Term .
+    op isId : Qid -> Bool .
+    op encode : String Nat -> Nat .
 
     eq 2smt(T) = 2smt*(T) [owise] .
     
-    eq 2smt*('n.Id) = 2smtConst("1000", 'Integer) .
-    eq 2smt*('count.Id) = 2smtConst("2000", 'Integer) .
     eq 2smt*(C) =  2smtConst(string(getName(C)), getType(C)) .
     eq 2smt*(V) =  2smtVar(string(getName(V)), getType(V)) .
     
@@ -232,7 +235,7 @@ mod SMT-UTILS is
     eq 2smtConst("#true", 'Boolean) = qid("#true.Boolean") .
     eq 2smtConst("#false", 'Boolean) = qid("#false.Boolean") .
     eq 2smtConst(S, 'Integer) = qid(S + ".Integer") .
-    *** eq 2smtConst(S, 'Id) = qid(S + ".Id") .
+    eq 2smtConst(S, 'Id) = qid(string(encode(S, length(S)), 10) + ".Integer") . *** ids are integers in smt
 
     eq 2smtVar(S, 'Boolean) = qid(S + ":Boolean") .
     eq 2smtVar(S, 'Integer) = qid(S + ":Integer") .
@@ -247,5 +250,11 @@ mod SMT-UTILS is
     
     ceq 2smt(C) = C if getType(C) == ('Integer).Sort .
     *** ceq 2smt(C) = qid(string(getName(C)) + ":Integer") if getType(C) == ('Id).Sort .
+
+    ceq isId(F) = true if substr(string(F), length(string(F)) + - 2, 2) == "Id" .
+    eq isId(F) = false [owise] .
+
+    eq encode("", N) = 256 .
+    eq encode(S, N) = ascii(substr(S,0,1)) * (256 ^ N) + encode(substr(S, 1, length(S)), N + -1) .
     
 endm 

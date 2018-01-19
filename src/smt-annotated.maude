@@ -42,6 +42,10 @@ fmod BOOLEAN is
   op _#===_ : Boolean Boolean -> Boolean [gather (e E) prec 51 special (id-hook SMT_Symbol (===)) metadata "builtin"] .
   op _#=/==_ : Boolean Boolean -> Boolean [gather (e E) prec 51 special (id-hook SMT_Symbol (=/==)) metadata "builtin"] .
   op _#?_:_ : Boolean Boolean Boolean -> Boolean [gather (e e e) prec 71 special (id-hook SMT_Symbol (ite)) metadata "builtin"] .
+
+  vars B B' : Boolean .
+    eq B #and #true = B .
+    eq #true #and B = B .
 endfm
 
 fmod INTEGER is
