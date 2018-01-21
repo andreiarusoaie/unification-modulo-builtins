@@ -87,9 +87,9 @@ mod UNIFICATION-MODULO-BUILTINS is
     eq substToObj(none) = identity .
     
     sort UnificationResults .
-    op noUnifResults : -> UnificationResults .
+    op noUMBResults : -> UnificationResults .
     op [_|_] : SubstitutionAtObjectLevel ConstraintFormula -> UnificationResults [format (n d d n n d)] .
-    op _,,_ : UnificationResults UnificationResults -> UnificationResults [gather (E e) prec 70 format(d d d d d) id: noUnifResults] .
+    op _,,_ : UnificationResults UnificationResults -> UnificationResults [gather (E e) prec 70 format(d d d d d) id: noUMBResults] .
 
     op processUnifModBuiltin : Substitution Substitution Substitutions Qid -> UnificationResults .
     ceq processUnifModBuiltin(S1, S2 , (S ;; SS), Q)  = ([ substToObj(S') | CF ] ,, processUnifModBuiltin(S1, S2, SS, Q))
@@ -97,7 +97,7 @@ mod UNIFICATION-MODULO-BUILTINS is
 	  CF := downTerm('_And_[
 	      '_And_[substAsTerm(S1), substAsTerm(S2)],
 	      substAsTerm(removeNonBuiltinKeys(S, Q))] , Not #true) .
-    eq processUnifModBuiltin(S1, S2 , emptyUnif, Q) = noUnifResults .
+    eq processUnifModBuiltin(S1, S2 , emptyUnif, Q) = noUMBResults .
     *** end internals ****
 
 
@@ -129,10 +129,10 @@ mod UNIFICATION-MODULO-BUILTINS is
     op filterUnsatUMBs : UnificationResults -> UnificationResults  .
     ceq filterUnsatUMBs([ SO | B ] ,, UR) = [ SO | B ] ,, filterUnsatUMBs(UR) if isSat(B) .
     ceq filterUnsatUMBs([ SO | B ] ,, UR) = filterUnsatUMBs(UR) if not isSat(B) .
-    eq filterUnsatUMBs(noUnifResults) = noUnifResults .
+    eq filterUnsatUMBs(noUMBResults) = noUMBResults .
 
     *** some vars for testing
-    var Z : State .
+    vars Z Z' : State .
     vars N N1 M L C C' : Integer .
     vars I J K : Id .
     
@@ -149,14 +149,45 @@ endm
     
 *** Some other tests
 
-*** TEST1:  n |-> 2 * N, count |-> C  =?   count |-> C', n |-> 3 * N'
+*** TEST1: two simple terms; test the `basic` functionalities: abstractions, comm
+***   n |-> 2 * N, count |-> C  =?   count |-> C', n |-> 3 * N'
 *** 2 solutions, 1 unsatisfiable
 red in UNIFICATION-MODULO-BUILTINS : unifyAbstractions(upTerm(n |-> 2 #* N, count |-> C), upTerm(count |-> C', n |-> 3 #* N1) ,'STATE) . 
 red in UNIFICATION-MODULO-BUILTINS : completeSetOfUMBsUnfiltered(upTerm(n |-> 2 #* N, count |-> C), upTerm(count |-> C', n |-> 3 #* N1) ,'STATE) . 
 red in UNIFICATION-MODULO-BUILTINS : completeSetOfUMBs(upTerm(n |-> 2 #* N, count |-> C), upTerm(count |-> C', n |-> 3 #* N1) ,'STATE) .     
 
+*** TEST2: terms have non-builin variables and sat filter should eliminate 2 solutions
+***    n |-> 1 , m |-> 4, count |-> 42    =?    Z , n |-> 1
+*** 3 solutions, 2 unsatisfiable
+red in UNIFICATION-MODULO-BUILTINS : unifyAbstractions(upTerm(n |-> 1 , m |-> 4, count |-> 42) , upTerm(Z , n |-> 1), 'STATE) .
+red in UNIFICATION-MODULO-BUILTINS : completeSetOfUMBsUnfiltered(upTerm(n |-> 1 , m |-> 4, count |-> 42) , upTerm(Z , n |-> 1), 'STATE) .
+red in UNIFICATION-MODULO-BUILTINS : completeSetOfUMBs(upTerm(n |-> 1 , m |-> 4, count |-> 42) , upTerm(Z , n |-> 1), 'STATE) .
+
+
+*** TEST3: tricky Z , Z 
+***    n |-> 1 , m |-> 4, count |-> 42    =?    Z , Z
+*** should return noUMBResults
+red in UNIFICATION-MODULO-BUILTINS : unifyAbstractions(upTerm(n |-> 1 , m |-> 4, count |-> 42) , upTerm(Z , Z), 'STATE) .
+red in UNIFICATION-MODULO-BUILTINS : completeSetOfUMBsUnfiltered(upTerm(n |-> 1 , m |-> 4, count |-> 42) , upTerm(Z , Z), 'STATE) .
+red in UNIFICATION-MODULO-BUILTINS : completeSetOfUMBs(upTerm(n |-> 1 , m |-> 4, count |-> 42) , upTerm(Z , Z), 'STATE) .    
     
-*** Paper example: n |-> 1, count |-> 42  =?  Z, n |-> 1 
+*** TEST4: tricky Z, Z again, but with a solution this time
+***    n |-> 1 , n | -> 1    =?    Z , Z
+*** should return 1 solutions
+red in UNIFICATION-MODULO-BUILTINS : unifyAbstractions(upTerm(n |-> 1 , n |-> 1) , upTerm(Z , Z), 'STATE) .
+red in UNIFICATION-MODULO-BUILTINS : completeSetOfUMBsUnfiltered(upTerm(n |-> 1 , n |-> 1) , upTerm(Z , Z), 'STATE) .
+red in UNIFICATION-MODULO-BUILTINS : completeSetOfUMBs(upTerm(n |-> 1 , n |-> 1) , upTerm(Z , Z), 'STATE) .    
+
+    
+*** TEST5: two variables
+***    n |-> 1 , m |-> 5, Z'   =?    Z , n |-> 1
+*** should return 3 solutions, 1 unsatisfiable
+red in UNIFICATION-MODULO-BUILTINS : unifyAbstractions(upTerm(n |-> 1 , m |-> 5, Z') , upTerm(Z, n |-> 1), 'STATE) .
+red in UNIFICATION-MODULO-BUILTINS : completeSetOfUMBsUnfiltered(upTerm(n |-> 1 , m |-> 5, Z') , upTerm(Z, n |-> 1), 'STATE) .
+red in UNIFICATION-MODULO-BUILTINS : completeSetOfUMBs(upTerm(n |-> 1 , m |-> 5, Z') , upTerm(Z, n |-> 1), 'STATE) .    
+
+    
+*** PAPER EXAMPLE: n |-> 1, count |-> 42  =?  Z, n |-> 1 
 *** 2 solutions, 1 unsatisfiable
 red in UNIFICATION-MODULO-BUILTINS : abstraction(upTerm(n |-> 1 , count |-> 42), 'STATE) .
 red in UNIFICATION-MODULO-BUILTINS : abstraction(upTerm(Z , n |-> 1), 'STATE) .

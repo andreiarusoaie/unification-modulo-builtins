@@ -59,10 +59,15 @@ mod UTILS is
     eq isConstructorHelper(Q, TL, OPS, Mod) = false [owise] .
 
 
+    *** to be used only in combination with isConstructorHelper
     op isSubsortTypeList : TypeList TypeList Module -> Bool .
     ceq isSubsortTypeList((Q TL), (Q' TL'), Mod) = isSubsortTypeList(TL, TL', Mod)
       if isSubsort(Q, Q', Mod) .
-    eq isSubsortTypeList(nil, nil, Mod) = true .
+    eq isSubsortTypeList(nil, nil, Mod) = true .  
+    *** extra types unconsumed coming from assoc+comm + upTerm
+    *** e.g., 'q[a,b,c] where op q : __ [assoc comm] . has typelist
+    *** ['Sort 'Sort 'Sort] but constructor typelist has only ['Sort 'Sort]
+    eq isSubsortTypeList(TL, nil, Mod) = true . 
     ceq isSubsortTypeList((Q TL), (Q' TL'), Mod) = false
       if isSubsort(Q, Q', Mod) = false .
     
