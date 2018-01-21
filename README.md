@@ -28,6 +28,8 @@ In your command line type:
 	:-$ cd src
 	:-$ make
 	
+By default, `make` runs several examples which we use for testing our main functionalities. For additional information about how to use the tool checkout the next section (i.e., **Functionalities**) or send an email to `arusoaie.andrei@info.uaic.ro`.
+
 For a prettier output (you need Perl for this):
 	
 	:-$ cd src
