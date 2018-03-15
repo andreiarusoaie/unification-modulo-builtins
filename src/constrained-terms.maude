@@ -63,7 +63,7 @@ mod UNIFICATION-MODULO-BUILTINS is
     vars T T1 T2 T1A T2A : Term .
     var Q : Qid .
     var CF : ConstraintFormula .
-    vars N' N'' : Nat .
+    vars N1 N2 : Nat .
     vars B B' : Boolean .
     
     
@@ -110,14 +110,14 @@ mod UNIFICATION-MODULO-BUILTINS is
     
     op completeSetOfUMBsUnfiltered : Term Term Qid -> UnificationResults .
     ceq completeSetOfUMBsUnfiltered(T1, T2, Q) = processUnifModBuiltin(S1, S2, SS, Q)
-      if { T1A | S1 | N' } := getAbstraction(T1, none, upModule(Q, true), 0) /\
-	  { T2A | S2 | N'' } := getAbstraction(T2, none, upModule(Q, true), slen(S1)) /\
+      if { T1A | S1 | N1 } := getAbstraction(T1, none, upModule(Q, true), 0) /\
+	  { T2A | S2 | N2 } := getAbstraction(T2, none, upModule(Q, true), slen(S1)) /\
 	  SS := getUnifiers(Q, T1A, T2A) .
 
     op unifyAbstractions : Term Term Qid -> Substitutions .
     ceq unifyAbstractions(T1, T2, Q) = getUnifiers(Q, T1A, T2A) 
-      if { T1A | S1 | N' } := getAbstraction(T1, none, upModule(Q, true), 0) /\
-	  { T2A | S2 | N'' } := getAbstraction(T2, none, upModule(Q, true), slen(S1)) .
+      if { T1A | S1 | N1 } := getAbstraction(T1, none, upModule(Q, true), 0) /\
+	  { T2A | S2 | N2 } := getAbstraction(T2, none, upModule(Q, true), slen(S1)) .
 
       
     *** smt filter for unification results ***
@@ -133,7 +133,7 @@ mod UNIFICATION-MODULO-BUILTINS is
 
     *** some vars for testing
     vars Z Z' : State .
-    vars N N1 M L C C' : Integer .
+    vars N N' M L C C' : Integer .
     vars I J K : Id .
     
 endm
@@ -195,4 +195,28 @@ red in UNIFICATION-MODULO-BUILTINS : unifyAbstractions(upTerm(n |-> 1 , count |-
 red in UNIFICATION-MODULO-BUILTINS : completeSetOfUMBsUnfiltered(upTerm(n |-> 1 , count |-> 42) , upTerm(Z , n |-> 1), 'STATE) .
 red in UNIFICATION-MODULO-BUILTINS : completeSetOfUMBs(upTerm(n |-> 1 , count |-> 42) , upTerm(Z , n |-> 1), 'STATE) .
 
+
+*** Paper examples: section 3.1
+
+***  n |-> 2 #* N #+ 1, count |-> C     ==?umb    count |-> N' #+ C', n |-> N' #+ 3
+*** red in UNIFICATION-MODULO-BUILTINS : unifyAbstractions(upTerm(n |-> 2 #* N #+ 1, count |-> C), upTerm(count |-> N' #+ C', n |-> N' #+ 3) ,'STATE) .     
+*** red in UNIFICATION-MODULO-BUILTINS : completeSetOfUMBsUnfiltered(upTerm(n |-> 2 #* N #+ 1, count |-> C), upTerm(count |-> N' #+ C', n |-> N' #+ 3) ,'STATE) .     
+red in UNIFICATION-MODULO-BUILTINS : completeSetOfUMBs(upTerm(n |-> 2 #* N #+ 1, count |-> C), upTerm(count |-> N' #+ C', n |-> N' #+ 3) ,'STATE) .     
+
+***  n |-> 2 #* N, count |-> C     ==?umb    count |-> N' #+ C', n |-> N' #+ 3
+*** red in UNIFICATION-MODULO-BUILTINS : unifyAbstractions(upTerm(n |-> 2 #* N, count |-> C), upTerm(count |-> N' #+ C', n |-> N' #+ 3) ,'STATE) .     
+*** red in UNIFICATION-MODULO-BUILTINS : completeSetOfUMBsUnfiltered(upTerm(n |-> 2 #* N, count |-> C), upTerm(count |-> N' #+ C', n |-> N' #+ 3) ,'STATE) .     
+red in UNIFICATION-MODULO-BUILTINS : completeSetOfUMBs(upTerm(n |-> 2 #* N, count |-> C), upTerm(count |-> N' #+ C', n |-> N' #+ 3) ,'STATE) .     
+
+***  n |-> N     ==?umb    count |-> N' #+ C', n |-> N' #+ 3
+*** red in UNIFICATION-MODULO-BUILTINS : unifyAbstractions(upTerm(n |-> N), upTerm(count |-> N' #+ C', n |-> N' #+ 3) ,'STATE) .     
+*** red in UNIFICATION-MODULO-BUILTINS : completeSetOfUMBsUnfiltered(upTerm(n |-> N), upTerm(count |-> N' #+ C', n |-> N' #+ 3) ,'STATE) .     
+red in UNIFICATION-MODULO-BUILTINS : completeSetOfUMBs(upTerm(n |-> N), upTerm(count |-> N' #+ C', n |-> N' #+ 3) ,'STATE) .     
+
+***  n |-> 1, count |-> C     ==?umb    count |-> N' #+ C', n |-> N' #+ 3
+*** red in UNIFICATION-MODULO-BUILTINS : unifyAbstractions(upTerm(n |-> 1, count |-> C), upTerm(count |-> N' #+ C', n |-> N' #+ 3) ,'STATE) .     
+*** red in UNIFICATION-MODULO-BUILTINS : completeSetOfUMBsUnfiltered(upTerm(n |-> 1, count |-> C), upTerm(count |-> N' #+ C', n |-> N' #+ 3) ,'STATE) .     
+red in UNIFICATION-MODULO-BUILTINS : completeSetOfUMBs(upTerm(n |-> 1, count |-> C), upTerm(count |-> N' #+ C', n |-> N' #+ 3) ,'STATE) .     
+
+    
 quit
