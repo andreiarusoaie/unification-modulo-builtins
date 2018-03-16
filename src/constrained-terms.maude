@@ -198,24 +198,25 @@ red in UNIFICATION-MODULO-BUILTINS : completeSetOfUMBs(upTerm(n |-> 1 , count |-
 
 *** Paper examples: section 3.1
 
+***  n |-> N     =?    count |-> N' #+ C', n |-> N' #+ 3
+*** red in UNIFICATION-MODULO-BUILTINS : unifyAbstractions(upTerm(n |-> N), upTerm(count |-> N' #+ C', n |-> N' #+ 3) ,'STATE) .     
+*** red in UNIFICATION-MODULO-BUILTINS : completeSetOfUMBsUnfiltered(upTerm(n |-> N), upTerm(count |-> N' #+ C', n |-> N' #+ 3) ,'STATE) .     
+red in UNIFICATION-MODULO-BUILTINS : completeSetOfUMBs(upTerm(n |-> N), upTerm(count |-> N' #+ C', n |-> N' #+ 3) ,'STATE) .     
+
 ***  n |-> 2 #* N #+ 1, count |-> C     =?    count |-> N' #+ C', n |-> N' #+ 3
-red in UNIFICATION-MODULO-BUILTINS : unifyAbstractions(upTerm(n |-> 2 #* N #+ 1, count |-> C), upTerm(count |-> N' #+ C', n |-> N' #+ 3) ,'STATE) .     
-red in UNIFICATION-MODULO-BUILTINS : completeSetOfUMBsUnfiltered(upTerm(n |-> 2 #* N #+ 1, count |-> C), upTerm(count |-> N' #+ C', n |-> N' #+ 3) ,'STATE) .     
+*** red in UNIFICATION-MODULO-BUILTINS : unifyAbstractions(upTerm(n |-> 2 #* N #+ 1, count |-> C), upTerm(count |-> N' #+ C', n |-> N' #+ 3) ,'STATE) .     
+*** red in UNIFICATION-MODULO-BUILTINS : completeSetOfUMBsUnfiltered(upTerm(n |-> 2 #* N #+ 1, count |-> C), upTerm(count |-> N' #+ C', n |-> N' #+ 3) ,'STATE) .     
 red in UNIFICATION-MODULO-BUILTINS : completeSetOfUMBs(upTerm(n |-> 2 #* N #+ 1, count |-> C), upTerm(count |-> N' #+ C', n |-> N' #+ 3) ,'STATE) .     
 
 ***  n |-> 2 #* N, count |-> C     =?    count |-> N' #+ C', n |-> N' #+ 3
-red in UNIFICATION-MODULO-BUILTINS : unifyAbstractions(upTerm(n |-> 2 #* N, count |-> C), upTerm(count |-> N' #+ C', n |-> N' #+ 3) ,'STATE) .     
-red in UNIFICATION-MODULO-BUILTINS : completeSetOfUMBsUnfiltered(upTerm(n |-> 2 #* N, count |-> C), upTerm(count |-> N' #+ C', n |-> N' #+ 3) ,'STATE) .     
+*** red in UNIFICATION-MODULO-BUILTINS : unifyAbstractions(upTerm(n |-> 2 #* N, count |-> C), upTerm(count |-> N' #+ C', n |-> N' #+ 3) ,'STATE) .     
+*** red in UNIFICATION-MODULO-BUILTINS : completeSetOfUMBsUnfiltered(upTerm(n |-> 2 #* N, count |-> C), upTerm(count |-> N' #+ C', n |-> N' #+ 3) ,'STATE) .     
 red in UNIFICATION-MODULO-BUILTINS : completeSetOfUMBs(upTerm(n |-> 2 #* N, count |-> C), upTerm(count |-> N' #+ C', n |-> N' #+ 3) ,'STATE) .     
 
-***  n |-> N     =?    count |-> N' #+ C', n |-> N' #+ 3
-red in UNIFICATION-MODULO-BUILTINS : unifyAbstractions(upTerm(n |-> N), upTerm(count |-> N' #+ C', n |-> N' #+ 3) ,'STATE) .     
-red in UNIFICATION-MODULO-BUILTINS : completeSetOfUMBsUnfiltered(upTerm(n |-> N), upTerm(count |-> N' #+ C', n |-> N' #+ 3) ,'STATE) .     
-red in UNIFICATION-MODULO-BUILTINS : completeSetOfUMBs(upTerm(n |-> N), upTerm(count |-> N' #+ C', n |-> N' #+ 3) ,'STATE) .     
 
 ***  n |-> 1, count |-> C     =?    count |-> N' #+ C', n |-> N' #+ 3
-red in UNIFICATION-MODULO-BUILTINS : unifyAbstractions(upTerm(n |-> 1, count |-> C), upTerm(count |-> N' #+ C', n |-> N' #+ 3) ,'STATE) .     
-red in UNIFICATION-MODULO-BUILTINS : completeSetOfUMBsUnfiltered(upTerm(n |-> 1, count |-> C), upTerm(count |-> N' #+ C', n |-> N' #+ 3) ,'STATE) .     
+*** red in UNIFICATION-MODULO-BUILTINS : unifyAbstractions(upTerm(n |-> 1, count |-> C), upTerm(count |-> N' #+ C', n |-> N' #+ 3) ,'STATE) .     
+*** red in UNIFICATION-MODULO-BUILTINS : completeSetOfUMBsUnfiltered(upTerm(n |-> 1, count |-> C), upTerm(count |-> N' #+ C', n |-> N' #+ 3) ,'STATE) .     
 red in UNIFICATION-MODULO-BUILTINS : completeSetOfUMBs(upTerm(n |-> 1, count |-> C), upTerm(count |-> N' #+ C', n |-> N' #+ 3) ,'STATE) .     
 
     
